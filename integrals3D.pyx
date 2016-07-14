@@ -78,9 +78,9 @@ cdef double vp(double ro, double z,  double d, double b):
     res = ((z + d) * (z + d) + ro * ro + b * b) * ((z + d) * (z + d) + ro * ro + b * b)
     return 1.0000 / res
 
-cdef double vm(double x, double d, double b):
+cdef double vm(double ro, double z,  double d, double b):
     cdef double res
-    res = ((x - d) * (x - d) + b * b) * ((x - d) * (x - d) + b * b)
+    res = ((z - d) * (z - d) + ro * ro + b * b) * ((z - d) * (z - d) + ro * ro + b * b)
     return 1.0000 / res
 
 def spp_1d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
