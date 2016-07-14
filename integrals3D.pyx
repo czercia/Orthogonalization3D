@@ -18,7 +18,7 @@ def numerov_results(np.ndarray l, np.ndarray energy):
         result_y[ind]= numerov_res[1]
     return result_x, result_y
 
-def f(x, x_list, y_list):
+def f(x, np.ndarray x_list, np.ndarray y_list):
     return np.interp(x, x_list, y_list)
 
 def rmax_value(np.ndarray energy):
@@ -26,9 +26,9 @@ def rmax_value(np.ndarray energy):
     cdef np.ndarray[np.float64_t, ndim = 1] result = np.zeros((len(energy)), dtype=float)
     cdef Py_ssize_t i
     for i in range(len(energy)):
-        if energy[i] <= 0:
-            r_max_value = 2
-        elif 0 < energy[i] < 0.1:
+        if energy[i] <= -0.1:
+            r_max_value = 8
+        elif -0.1 < energy[i] < 0.1:
             r_max_value = 20
         elif 0.1 <= energy[i] < 0.3:
             r_max_value = 40
@@ -97,8 +97,8 @@ def spp_1d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray nume
                         lambda x: norm[i, j] * f(x, numerov_x[i], numerov_y[i]) * f(x, numerov_x[j], numerov_y[j]),
                         -x_max, x_max, epsabs=1e-6, limit=100)[
                         0]
-        else:
-            result[i, j] = result[j, i]
+            else:
+                result[i, j] = result[j, i]
     return result
 
 def spm_1d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
@@ -112,7 +112,7 @@ def spm_1d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
             result[i, j] = \
                 integrate.quad(
                     lambda x: norm[i, j] * f(x + d, numerov_x[i], numerov_y[i]) * f(x - d, numerov_x[j], numerov_y[j]),
-                    -x_max, x_max, epsabs=1e-6,
+                    -x_max + d, x_max - d, epsabs=1e-6,
                     limit=100)[
                     0]
     return result
@@ -129,8 +129,8 @@ def amm_1d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
                 result[i, j] = \
                     integrate.quad(
                         lambda x: norm[i, j] * f(x - d, numerov_x[i], numerov_y[i]) * (x * d) * f(x - d, numerov_x[j],
-                                                                                                  numerov_y[j]), -x_max,
-                        x_max, points=(-d, d), epsabs=1e-6, limit=100)[0]
+                                                                                                  numerov_y[j]), -x_max + d,
+                        x_max +d ,  epsabs=1e-6, limit=100)[0]
             else:
                 result[i, j] = result[j, i]
     return result
@@ -147,8 +147,8 @@ def app_1d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
                     integrate.quad(
                         lambda x: norm[i, j] * f(x + d, numerov_x[i], numerov_y[i]) * (-x * d) * f(x + d, numerov_x[j],
                                                                                                    numerov_y[j]),
-                        -x_max,
-                        x_max, points=(-d, 0), epsabs=1e-6, limit=100)[0]
+                        -x_max - d,
+                        x_max -d ,  epsabs=1e-6, limit=100)[0]
             else:
                 result[i, j] = result[j, i]
     return result
@@ -162,8 +162,8 @@ def apm_1d_integrate(int nst,  double d, np.ndarray norm, np.ndarray r_max, np.n
             x_max = rmax(i, j, r_max)
             result[i, j] = integrate.quad(
                 lambda x: norm[i, j] * f(x + d, numerov_x[i], numerov_y[i]) * (x * d) * f(x - d, numerov_x[j],
-                                                                                          numerov_y[j]), -x_max,
-                x_max, points=(-d, d), epsabs=1e-6, limit=100)[0]
+                                                                                          numerov_y[j]), -x_max + d,
+                x_max - d,  epsabs=1e-6, limit=100)[0]
     return result
 # def amp_1d_integrate(int nst, np.ndarray ni, double x_max, double d, np.ndarray norm):
 #     cdef Py_ssize_t i, j
@@ -189,8 +189,8 @@ def rpp_1d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_
                                                                                                                       j],
                                                                                                                   numerov_y[
                                                                                                                       j]),
-                    -x_max,
-                    x_max, points=(-d, d), epsabs=1e-6, limit=100)[0]
+                    -x_max -d,
+                    x_max + d,  epsabs=1e-6, limit=100)[0]
     return result
 
 def rmm_1d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_max,
@@ -208,8 +208,8 @@ def rmm_1d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_
                                                                                                                       j],
                                                                                                                   numerov_y[
                                                                                                                       j]),
-                    -x_max,
-                    x_max, points=(-d, d), epsabs=1e-6, limit=100)[0]
+                    -x_max + d,
+                    x_max + d,  epsabs=1e-6, limit=100)[0]
     return result
 
 def rpm_1d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_max,
@@ -227,8 +227,8 @@ def rpm_1d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_
                                                                                                                       j],
                                                                                                                   numerov_y[
                                                                                                                       j]),
-                    -x_max,
-                    x_max, points=(-d, d), epsabs=1e-6, limit=100)[0]
+                    -x_max + d,
+                    x_max - d , epsabs=1e-6, limit=100)[0]
     return result
 # def rmp_1d_integrate(int nst, np.ndarray ni, double x_max, double d, np.ndarray norm):
 #     cdef Py_ssize_t i, j
