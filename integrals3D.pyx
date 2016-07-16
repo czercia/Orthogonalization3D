@@ -124,21 +124,28 @@ def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray nume
 
 cdef double r(double ro, double z, double d):
     cdef double result
-    result = sqrt(ro * ro + (z+d) * (z+d))
+    result = sqrt(ro * ro + (z + d) * (z + d))
+    return result
+
+cdef double leg_pol_norm(int l_i, int l_j):
+    cdef double result
+    result = sqrt((2 * l_i + 1) * (2 * l_j + 1))/(2 * np.pi)
     return result
 
 def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
-                     np.ndarray numerov_y, np.ndarray sph):
+                     np.ndarray numerov_y, np.ndarray l):
     cdef Py_ssize_t i, j
     cdef double x_max
-    cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
+    cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst), dtype = np.float64)
     for i in range(nst):
         for j in range(nst):
             x_max = rmax(i, j, r_max)
-            result[i, j] = \
+            result[i, j] = leg_pol_norm(l[i], l[j]) *\
                 integrate.dblquad(
-                    lambda ro, z: norm[i, j] * f(sqrt(ro * ro + (z + d) * (z + d)), numerov_x[i], numerov_y[i]) * f(
-                        sqrt(ro * ro + (z - d) * (z - d)), numerov_x[j], numerov_y[j]) * special.eval_legendre(l, ),
+                    lambda ro, z: norm[i, j] * f(r(ro, z, d), numerov_x[i], numerov_y[i]) * f(
+                        r(ro, z, -d), numerov_x[j], numerov_y[j]) * special.eval_legendre(l[i], (z + d) / r(ro, z,
+                                                                                                            d)) * special.eval_legendre(
+                        l[j], (z - d) / r(ro, z, -d)) * ro,
                     -x_max + d, x_max - d, epsabs=1e-6,
                     limit=100)[
                     0]
