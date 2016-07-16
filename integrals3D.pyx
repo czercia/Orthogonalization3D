@@ -51,7 +51,8 @@ def rmax(int i, int j, np.ndarray r_max):
 def normalize(int i, double x_max, np.ndarray numerov_x,
               np.ndarray numerov_y):
     cdef double n
-    n = integrate.quad(lambda r: abs(r * r * f(r, numerov_x[i], numerov_y[i])) * abs(f(r, numerov_x[i], numerov_y[i])), -x_max,
+    n = integrate.quad(lambda r: abs(r * r * f(r, numerov_x[i], numerov_y[i])) * abs(f(r, numerov_x[i], numerov_y[i])),
+                       -x_max,
                        x_max, epsabs=1e-6)[0]
     return 1. / np.sqrt(n)
 
@@ -85,8 +86,22 @@ cdef double vm(double ro, double z, double d, double b):
     res = ((z - d) * (z - d) + ro * ro + b * b) * ((z - d) * (z - d) + ro * ro + b * b)
     return 1.0000 / res
 
+def ssph_harm():
+    cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((params.l_max + 1, params.l_max + 1))
+    cdef Py_ssize_t i, j
+    for i in range(params.l_max + 1):
+        for j in range(params.l_max + 1):
+            if i <= j:
+                result[i, j] = 2 * np.pi * integrate.quad(
+                    lambda teta: special.sph_harm(n=i, m=0, theta=0, phi=teta) * special.sph_harm(n=j, m=0, theta=0,
+                                                                                                  phi=teta) * np.sin(
+                        teta), 0, 2 * np.pi)[0]
+            else:
+                result[i, j] = result[j, i]
+    return result
+
 def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
-                     np.ndarray numerov_y, np.ndarray l):
+                     np.ndarray numerov_y, np.ndarray l, np.ndarray s_sph_harm):
     cdef Py_ssize_t i, j
     cdef double x_max
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
@@ -99,9 +114,10 @@ def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray nume
                 else:
                     result[i, j] = \
                         integrate.quad(
-                            lambda x: norm[i, j] * f(x, numerov_x[i], numerov_y[i]) * f(x, numerov_x[j], numerov_y[j]),
+                            lambda x: norm[i, j] * x * x * f(x, numerov_x[i], numerov_y[i]) * f(x, numerov_x[j],
+                                                                                                numerov_y[j]),
                             -x_max, x_max, epsabs=1e-6, limit=100)[
-                            0]
+                            0] * s_sph_harm[l[i], l[j]]
             else:
                 result[i, j] = result[j, i]
     return result
