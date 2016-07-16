@@ -298,27 +298,30 @@ def rmm_3d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_
     return result
 
 def rpm_3d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_max,
-                     np.ndarray numerov_x, np.ndarray numerov_y):
+                     np.ndarray numerov_x, np.ndarray numerov_y, np.ndarray l):
     cdef Py_ssize_t i, j
-    cdef double x_max
-    cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
+    cdef double res1, res2, lim_low_z, lim_up_z
+    cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst), dtype=np.float64)
     for i in range(nst):
         for j in range(nst):
-            x_max = rmax(i, j, r_max)
-            result[i, j] = \
-                integrate.quad(
-                    lambda x: norm[i, j] * f(x + d, numerov_x[i], numerov_y[i]) * (vm(x, d, b) - vp(x, d, b)) * f(x - d,
-                                                                                                                  numerov_x[
-                                                                                                                      j],
-                                                                                                                  numerov_y[
-                                                                                                                      j]),
-                    -x_max + d,
-                    x_max - d, epsabs=1e-6, limit=100)[0]
+            lim_low_z = -r_max[j] + d
+            lim_up_z = (r_max[i] * r_max[i] - r_max[j] * r_max[j])/(4 * d)
+            res1 = integrate.dblquad(
+                       lambda ro, z: norm[i, j] * f(r(ro, z + d), numerov_x[i], numerov_y[i]) * f(
+                           r(ro, z - d), numerov_x[j], numerov_y[j]) * legendre(l[i], l[j], ro, z + d,
+                                                                                z - d) * ro * vp(ro, z, d, b),
+                       lim_low_z, lim_up_z, lambda z: 0, lambda z: sqrt(r_max[j] * r_max[j] - (z - d) * (z - d)),
+                       epsabs=1e-6,
+                       limit=100)[0]
+
+            lim_low_z = (r_max[i] * r_max[i] - r_max[j] * r_max[j])/(4 * d)
+            lim_up_z = r_max[i] - d
+            res2 = integrate.dblquad(
+                       lambda ro, z: norm[i, j] * f(r(ro, z + d), numerov_x[i], numerov_y[i]) * f(
+                           r(ro, z - d), numerov_x[j], numerov_y[j]) * legendre(l[i], l[j], ro, z + d,
+                                                                                z - d) * ro * vp(ro, z, d, b),
+                       lim_low_z, lim_up_z, lambda z: 0, lambda z: sqrt(r_max[i] * r_max[i] - (z + d) * (z + d)),
+                       epsabs=1e-6,
+                       limit=100)[0]
+            result[i,j] = leg_pol_norm(l[i], l[j]) * (res1 + res2)
     return result
-# def rmp_1d_integrate(int nst, np.ndarray ni, double x_max, double d, np.ndarray norm):
-#     cdef Py_ssize_t i, j
-#     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
-#     for i in range(nst):
-#         for j in range(nst):
-#             result[j, i] = norm[i, j] * (f(2 * d, ni[j]) * f(0, ni[i]) - f(0, ni[j])* f(-2*d, ni[i]))
-#     return result
