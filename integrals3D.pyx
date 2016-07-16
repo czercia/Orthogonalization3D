@@ -122,8 +122,13 @@ def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray nume
                 result[i, j] = result[j, i]
     return result
 
+cdef double r(double ro, double z, double d):
+    cdef double result
+    result = sqrt(ro * ro + (z+d) * (z+d))
+    return result
+
 def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
-                     np.ndarray numerov_y):
+                     np.ndarray numerov_y, np.ndarray sph):
     cdef Py_ssize_t i, j
     cdef double x_max
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
@@ -133,7 +138,7 @@ def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
             result[i, j] = \
                 integrate.dblquad(
                     lambda ro, z: norm[i, j] * f(sqrt(ro * ro + (z + d) * (z + d)), numerov_x[i], numerov_y[i]) * f(
-                        sqrt(ro * ro + (z - d) * (z - d)), numerov_x[j], numerov_y[j]) * special.sp,
+                        sqrt(ro * ro + (z - d) * (z - d)), numerov_x[j], numerov_y[j]) * special.eval_legendre(l, ),
                     -x_max + d, x_max - d, epsabs=1e-6,
                     limit=100)[
                     0]
