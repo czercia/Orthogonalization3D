@@ -51,7 +51,7 @@ def rmax(int i, int j, np.ndarray r_max):
 def normalize(int i, double x_max, np.ndarray numerov_x,
               np.ndarray numerov_y):
     cdef double n
-    n = integrate.quad(lambda x: abs(x * x * f(x, numerov_x[i], numerov_y[i])) * abs(f(x, numerov_x[i], numerov_y[i])), -x_max,
+    n = integrate.quad(lambda r: abs(r * r * f(r, numerov_x[i], numerov_y[i])) * abs(f(r, numerov_x[i], numerov_y[i])), -x_max,
                        x_max, epsabs=1e-6)[0]
     return 1. / np.sqrt(n)
 
@@ -86,7 +86,7 @@ cdef double vm(double ro, double z, double d, double b):
     return 1.0000 / res
 
 def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
-                     np.ndarray numerov_y):
+                     np.ndarray numerov_y, np.ndarray l):
     cdef Py_ssize_t i, j
     cdef double x_max
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
@@ -94,11 +94,14 @@ def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray nume
         for j in range(nst):
             if i <= j:
                 x_max = rmax(i, j, r_max)
-                result[i, j] = \
-                    integrate.quad(
-                        lambda x: norm[i, j] * f(x, numerov_x[i], numerov_y[i]) * f(x, numerov_x[j], numerov_y[j]),
-                        -x_max, x_max, epsabs=1e-6, limit=100)[
-                        0]
+                if l[i] != l[j]:
+                    result[i, j] = 0
+                else:
+                    result[i, j] = \
+                        integrate.quad(
+                            lambda x: norm[i, j] * f(x, numerov_x[i], numerov_y[i]) * f(x, numerov_x[j], numerov_y[j]),
+                            -x_max, x_max, epsabs=1e-6, limit=100)[
+                            0]
             else:
                 result[i, j] = result[j, i]
     return result
