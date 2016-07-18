@@ -269,27 +269,31 @@ def rpp_3d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_
                         numerov_y[
                             j]),
                     lim_low_z,
-                    lim_up_z, lambda z: 0, lambda z: sqrt(x_max * x_max - (z - d) * (z - d)), epsabs=1e-6, limit=100)[0]
+                    lim_up_z, lambda z: 0, lambda z: sqrt(x_max * x_max - (z + d) * (z + d)), epsabs=1e-6, limit=100)[0]
             result[i, j] = leg_pol_norm(l[i], l[j]) * result[i, j]
     return result
 
 def rmm_3d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_max,
-                     np.ndarray numerov_x, np.ndarray numerov_y):
+                     np.ndarray numerov_x, np.ndarray numerov_y, np.ndarray l):
     cdef Py_ssize_t i, j
-    cdef double x_max
+    cdef double lim_low_z, lim_up_z, x_max
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
     for i in range(nst):
         for j in range(nst):
             x_max = rmax(i, j, r_max)
+            lim_low_z = -x_max + d
+            lim_up_z = x_max + d
             result[i, j] = \
-                integrate.quad(
-                    lambda x: norm[i, j] * f(x - d, numerov_x[i], numerov_y[i]) * (vm(x, d, b) - vp(x, d, b)) * f(x - d,
-                                                                                                                  numerov_x[
-                                                                                                                      j],
-                                                                                                                  numerov_y[
-                                                                                                                      j]),
-                    -x_max + d,
-                    x_max + d, epsabs=1e-6, limit=100)[0]
+                integrate.dblquad(
+                    lambda ro, z: norm[i, j] * f(r(ro, z - d), numerov_x[i], numerov_y[i]) * vp(ro, z, d, b) * f(
+                        r(ro, z - d),
+                        numerov_x[
+                            j],
+                        numerov_y[
+                            j]),
+                    lim_low_z,
+                    lim_up_z, lambda z: 0, lambda z: sqrt(x_max * x_max - (z - d) * (z - d)), epsabs=1e-6, limit=100)[0]
+            result[i, j] = leg_pol_norm(l[i], l[j]) * result[i, j]
     return result
 
 def rpm_3d_integrate(int nst, double d, np.ndarray norm, double b, np.ndarray r_max,
