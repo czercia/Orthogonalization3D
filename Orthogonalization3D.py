@@ -2,8 +2,8 @@ import multiprocessing
 import numpy as np
 from scipy import linalg
 
-import integrals1D
-import ortogonalization
+import integrals3D
+import orthogonalization
 import params
 
 np.set_printoptions(precision=8, suppress=True)
@@ -28,10 +28,10 @@ for l_value in range(1, params.l_max + 1):
 
 
 # lista rmax
-r_max_list = integrals1D.rmax_value(energies_list)
+r_max_list = integrals3D.rmax_value(energies_list)
 
 # wyniki z numerova
-numerov = integrals1D.numerov_results(l, energies_list)
+numerov = integrals3D.numerov_results(l, energies_list)
 numerov_x = numerov[0]
 numerov_y = numerov[1]
 # print type(numerov_y)
@@ -41,9 +41,9 @@ numerov_y = numerov[1]
 # calculate SPP
 if not params.AllMatricesCalculated:
     # normalize functions
-    norm = integrals1D.norm_matrix(n_states, r_max_list, numerov_x, numerov_y)
-    spp = integrals1D.spp_1d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
-    appmm = integrals1D.appmm_1d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
+    norm = integrals3D.norm_matrix(n_states, r_max_list, numerov_x, numerov_y)
+    spp = integrals3D.spp_3d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
+    appmm = integrals3D.appmm_3d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
     np.savetxt(
         params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'appmm.dat', appmm, fmt="%6f")
     print spp
@@ -56,33 +56,33 @@ def solve(i_min, i_max):
         i += 1
         print ("d = " + str(d) + " " + str(i) + "/" + str(len(d_vals)))
         if not params.AllMatricesCalculated:
-            spm = integrals1D.spm_1d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
+            spm = integrals3D.spm_3d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
             # app = integrals1D.app_1d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
             app = -appmm + d * spp
             amm = appmm + d * spp
             # amm = integrals1D.amm_1d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
-            apm = integrals1D.apm_1d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
-            rpp = integrals1D.rpp_1d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
-            rmm = integrals1D.rmm_1d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
-            rpm = integrals1D.rpm_1d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
+            apm = integrals3D.apm_3d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
+            rpp = integrals3D.rpp_3d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
+            rmm = integrals3D.rmm_3d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
+            rpm = integrals3D.rpm_3d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
 
-            S = ortogonalization.calculate_matrix(spp, spm, spm.T, spp)
+            S = orthogonalization.calculate_matrix(spp, spm, spm.T, spp)
             np.savetxt(
                 params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat', S, fmt="%6f")
-            A = 2 * params.alpha * d * ortogonalization.calculate_matrix(app, apm, apm.T, amm)
+            A = 2 * params.alpha * d * orthogonalization.calculate_matrix(app, apm, apm.T, amm)
             np.savetxt(
                 params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat', A, fmt="%6f")
-            R = - ortogonalization.calculate_matrix(rpp, rpm, rpm.T, rmm)
+            R = - orthogonalization.calculate_matrix(rpp, rpm, rpm.T, rmm)
             np.savetxt(
                 params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat', R, fmt="%6f")
-            H, E = ortogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
+            H, E = orthogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
             np.savetxt(
                 params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'H_d=' + str(d) + '.dat', H, fmt="%6f")
         if params.AllMatricesCalculated:
             S = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat')
             R = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat')
             A = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat')
-        H, E = ortogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
+        H, E = orthogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
         # S = S.round(3)
         # H = H.round(3)
         inv_sqrt_s = linalg.inv(linalg.sqrtm(S))
