@@ -45,7 +45,7 @@ if not params.AllMatricesCalculated:
     spp = integrals1D.spp_1d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
     appmm = integrals1D.appmm_1d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
     np.savetxt(
-        params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'appmm.dat', appmm, fmt="%6f")
+        params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'appmm.dat', appmm, fmt="%6f")
     print spp
 
 
@@ -68,20 +68,20 @@ def solve(i_min, i_max):
 
             S = ortogonalization.calculate_matrix(spp, spm, spm.T, spp)
             np.savetxt(
-                params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat', S, fmt="%6f")
+                params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat', S, fmt="%6f")
             A = 2 * params.alpha * d * ortogonalization.calculate_matrix(app, apm, apm.T, amm)
             np.savetxt(
-                params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat', A, fmt="%6f")
+                params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat', A, fmt="%6f")
             R = - ortogonalization.calculate_matrix(rpp, rpm, rpm.T, rmm)
             np.savetxt(
-                params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat', R, fmt="%6f")
+                params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat', R, fmt="%6f")
             H, E = ortogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
             np.savetxt(
                 params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'H_d=' + str(d) + '.dat', H, fmt="%6f")
         if params.AllMatricesCalculated:
-            S = np.loadtxt(params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat')
-            R = np.loadtxt(params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat')
-            A = np.loadtxt(params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat')
+            S = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat')
+            R = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat')
+            A = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat')
         H, E = ortogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
         # S = S.round(3)
         # H = H.round(3)
@@ -102,9 +102,9 @@ def solve(i_min, i_max):
             vectorN = inv_sqrt_s.dot(vector)
             # print vectorN
             eigvecsMultiplied.append(vectorN)
-        np.savetxt(params.directory + 'ResultsR4/Eigenvalues/b=' + str(params.b) + '/' + str(params.n_states) + 'jeigvals_d=' + str(d) + '.dat',
+        np.savetxt(params.directory + 'Results/Eigenvalues/b=' + str(params.b) + '/' + str(params.n_states) + 'eigvals_d=' + str(d) + '.dat',
                    np.real(eig), fmt="%3f")
-        np.savetxt(params.directory + 'ResultsR4/Eigenvectors/b=' + str(params.b) + '/' + str(params.n_states) + 'jeigvecs_d=' + str(d) + '.dat',
+        np.savetxt(params.directory + 'Results/Eigenvectors/b=' + str(params.b) + '/' + str(params.n_states) + 'eigvecs_d=' + str(d) + '.dat',
                    np.real(eigvecsMultiplied), fmt="%3f")
 
 
