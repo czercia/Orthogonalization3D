@@ -201,7 +201,7 @@ def app_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
                 result[i, j] = result[j, i]
     return result
 
-def appmm(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
+def appmm_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
           np.ndarray numerov_y, np.ndarray l):
     cdef Py_ssize_t i, j
     cdef double x_max, res1, lim_low_x, lim_up_x
