@@ -55,20 +55,19 @@ def rmax_value(np.ndarray energy):
 def rmax(int i, int j, np.ndarray r_max):
     return min(r_max[i], r_max[j])
 
-def normalize(int i, double x_max, np.ndarray numerov_x,
-              np.ndarray numerov_y):
+def normalize(int i, double x_max):
     cdef double n
-    n = integrate.quad(lambda r: abs(r * r * f_sph(r, numerov_x[i], numerov_y[i])) * abs(f_sph(r, numerov_x[i], numerov_y[i])),
+    n = 4 * np.pi * integrate.quad(lambda r: r * r * abs( psi(r)) * abs(psi(r)),
                        -x_max,
                        x_max, epsabs=1e-6)[0]
     return 1. / np.sqrt(n)
 
-def norm_matrix(int nst, np.ndarray r_max, np.ndarray numerov_x, np.ndarray numerov_y):
+def norm_matrix(int nst, np.ndarray r_max):
     cdef Py_ssize_t i, j
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
     cdef np.ndarray[np.float64_t, ndim =1] norm_list = np.zeros((nst))
     for i in range(nst):
-        norm_list[i] = normalize(i, r_max[i], numerov_x, numerov_y)
+        norm_list[i] = normalize(i, r_max[i])
     for i in range(nst):
         for j in range(nst):
             result[i, j] = norm_list[i] * norm_list[j]
