@@ -11,41 +11,21 @@ n_states = params.n_states
 
 ###############################################################################################################
 
-energies_list = np.loadtxt(params.directory_numerov + 'baza_numerov_b=' + str(params.b) + '.dat')
+energies_list = np.loadtxt(params.basis_file())
 mask = np.ones(params.n_l[0], dtype=bool)
 energies_list = energies_list[mask]
-for l_value in range(1, params.l_max + 1):
-    l_list = np.loadtxt(params.directory_numerov + 'E_levels_l=' + str(l_value) + '_b=' + str(params.b) + '_1.dat')
-    mask = np.ones(params.n_l[l_value], dtype=bool)
-    energies_l = l_list[mask]
-    energies_list = np.concatenate((energies_list, energies_l))
-print energies_list
-
-l = np.zeros((params.n_l[0]), dtype=int)
-for l_value in range(1, params.l_max + 1):
-    ll = l_value * np.ones((params.n_l[l_value]), dtype=int)
-    l = np.concatenate((l, ll))
-
 
 # lista rmax
 r_max_list = integrals3D.rmax_value(energies_list)
-
-# wyniki z numerova
-numerov = integrals3D.numerov_results(l, energies_list)
-numerov_x = numerov[0]
-numerov_y = numerov[1]
-# print type(numerov_y)
-
 
 
 # calculate SPP
 if not params.AllMatricesCalculated:
     # normalize functions
-    norm = integrals3D.norm_matrix(n_states, r_max_list, numerov_x, numerov_y)
-    spp = integrals3D.spp_3d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
-    appmm = integrals3D.appmm_3d_integrate(n_states, norm, r_max_list, numerov_x, numerov_y)
-    np.savetxt(
-        params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'appmm.dat', appmm, fmt="%6f")
+    norm = integrals3D.norm_matrix(n_states, r_max_list)
+    spp = integrals3D.spp_3d_integrate(n_states, norm, r_max_list)
+    A = integrals3D.A_3d_integrate(n_states, norm, r_max_list)
+    np.savetxt(params.dir('matrices') +  str(params.n_states) + 'A.dat', A, fmt="%6f")
     print spp
 
 
@@ -56,33 +36,31 @@ def solve(i_min, i_max):
         i += 1
         print ("d = " + str(d) + " " + str(i) + "/" + str(len(d_vals)))
         if not params.AllMatricesCalculated:
-            spm = integrals3D.spm_3d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
-            # app = integrals1D.app_1d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
-            app = -appmm + d * spp
-            amm = appmm + d * spp
-            # amm = integrals1D.amm_1d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
-            apm = integrals3D.apm_3d_integrate(n_states, d, norm, r_max_list, numerov_x, numerov_y)
-            rpp = integrals3D.rpp_3d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
-            rmm = integrals3D.rmm_3d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
-            rpm = integrals3D.rpm_3d_integrate(n_states, d, norm, params.b, r_max_list, numerov_x, numerov_y)
+            spm = integrals3D.spm_3d_integrate(n_states, d, norm, r_max_list)
+            app = -A + d * spp
+            amm = A + d * spp
+            apm = np.zeros(n_states, n_states)
+            # rpp = integrals3D.rpp_3d_integrate(n_states, d, norm, params.b, r_max_list)
+            # rmm = integrals3D.rmm_3d_integrate(n_states, d, norm, params.b, r_max_list)
+            # rpm = integrals3D.rpm_3d_integrate(n_states, d, norm, params.b, r_max_list)
 
             S = orthogonalization.calculate_matrix(spp, spm, spm.T, spp)
             np.savetxt(
-                params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat', S, fmt="%6f")
+                params.dir('matrices') + str(params.n_states) + 'S_d=' + str(d) + '.dat', S, fmt="%6f")
             A = 2 * params.alpha * d * orthogonalization.calculate_matrix(app, apm, apm.T, amm)
             np.savetxt(
-                params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat', A, fmt="%6f")
-            R = - orthogonalization.calculate_matrix(rpp, rpm, rpm.T, rmm)
+                params.dir('matrices')+ str(params.n_states) + 'A_d=' + str(d) + '.dat', A, fmt="%6f")
+            # R = - orthogonalization.calculate_matrix(rpp, rpm, rpm.T, rmm)
+            # np.savetxt(
+            #     params.dir('matrices') + str(params.n_states) + 'R_d=' + str(d) + '.dat', R, fmt="%6f")
+            H, E = orthogonalization.calculate_H(S, 2 * params.alpha * d * A, R, d, energies_list)
             np.savetxt(
-                params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat', R, fmt="%6f")
-            H, E = orthogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
-            np.savetxt(
-                params.directory + 'ResultsR4/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'H_d=' + str(d) + '.dat', H, fmt="%6f")
+                params.dir('matrices') + str(params.n_states) + 'H_d=' + str(d) + '.dat', H, fmt="%6f")
         if params.AllMatricesCalculated:
-            S = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'S_d=' + str(d) + '.dat')
-            R = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'R_d=' + str(d) + '.dat')
-            A = np.loadtxt(params.directory + 'Results/Matrices/b=' + str(params.b) + '/' + str(params.n_states) + 'A_d=' + str(d) + '.dat')
-        H, E = orthogonalization.calculate_H(S, A, R, d, energies_list, r4=1)
+            S = np.loadtxt(params.dir('matrices') + str(params.n_states) + 'S_d=' + str(d) + '.dat')
+            R = np.loadtxt(params.dir('matrices') + str(params.n_states) + 'R_d=' + str(d) + '.dat')
+            A = np.loadtxt(params.dir('matrices') + str(params.n_states) + 'A_d=' + str(d) + '.dat')
+            H, E = orthogonalization.calculate_H(S, 2 * params.alpha * d * A, R, d, energies_list)
         # S = S.round(3)
         # H = H.round(3)
         inv_sqrt_s = linalg.inv(linalg.sqrtm(S))
@@ -96,16 +74,8 @@ def solve(i_min, i_max):
         # H2 = np.loadtxt(params.directory + 'Results/Matrices/k=' + str(params.kappa) + '/H_k=' + str(params.kappa) + '_d=' + str(
         #         d) + '.dat').view(complex).reshape(-1)
         eig = linalg.eigvals(H2)
-        eigvecs = linalg.eig(H2)[1]
-        eigvecsMultiplied = []
-        for vector in eigvecs:
-            vectorN = inv_sqrt_s.dot(vector)
-            # print vectorN
-            eigvecsMultiplied.append(vectorN)
-        np.savetxt(params.directory + 'Results/Eigenvalues/b=' + str(params.b) + '/' + str(params.n_states) + 'eigvals_d=' + str(d) + '.dat',
+        np.savetxt(params.dir('eigenvalues') + str(params.n_states) + 'eigvals_d=' + str(d) + '.dat',
                    np.real(eig), fmt="%3f")
-        np.savetxt(params.directory + 'Results/Eigenvectors/b=' + str(params.b) + '/' + str(params.n_states) + 'eigvecs_d=' + str(d) + '.dat',
-                   np.real(eigvecsMultiplied), fmt="%3f")
 
 
 # ********************************
