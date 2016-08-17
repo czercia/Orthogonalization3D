@@ -74,12 +74,12 @@ def norm_matrix(int nst, np.ndarray r_max):
     print ('normalization calculated')
     return result
 
-def norm_list(int nst, np.ndarray r_max, np.ndarray numerov_x, np.ndarray numerov_y):
+def norm_list(int nst, np.ndarray r_max):
     cdef Py_ssize_t i, j
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
     cdef np.ndarray[np.float64_t, ndim =1] norm_li = np.zeros((nst))
     for i in range(nst):
-        norm_li[i] = normalize(i, r_max[i], numerov_x, numerov_y)
+        norm_li[i] = normalize(i, r_max[i])
     return norm_li
 
 cdef double vp(double ro, double z, double d, double b):
