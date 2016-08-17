@@ -24,6 +24,9 @@ def f(double ro, double z, double d, np.ndarray x_list, np.ndarray y_list):
     cdef double r = sqrt(ro * ro + (z+d) * (z+d))
     return np.interp(r, x_list, y_list)
 
+def f_sph(double r, np.ndarray x_list, np.ndarray y_list):
+    return np.interp(r, x_list, y_list)
+
 def rmax_value(np.ndarray energy):
     cdef double r_max_value
     cdef np.ndarray[np.float64_t, ndim = 1] result = np.zeros((len(energy)), dtype=float)
@@ -87,19 +90,19 @@ cdef double vm(double ro, double z, double d, double b):
     res = ((z - d) * (z - d) + ro * ro + b * b) * ((z - d) * (z - d) + ro * ro + b * b)
     return 1.0000 / res
 
-def ssph_harm():
-    cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((params.l_max + 1, params.l_max + 1))
-    cdef Py_ssize_t i, j
-    for i in range(params.l_max + 1):
-        for j in range(params.l_max + 1):
-            if i <= j:
-                result[i, j] = 2 * np.pi * integrate.quad(
-                    lambda teta: special.sph_harm(n=i, m=0, theta=0, phi=teta) * special.sph_harm(n=j, m=0, theta=0,
-                                                                                                  phi=teta) * np.sin(
-                        teta), 0, 2 * np.pi)[0]
-            else:
-                result[i, j] = result[j, i]
-    return result
+# def ssph_harm():
+#     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((params.l_max + 1, params.l_max + 1))
+#     cdef Py_ssize_t i, j
+#     for i in range(params.l_max + 1):
+#         for j in range(params.l_max + 1):
+#             if i <= j:
+#                 result[i, j] = 2 * np.pi * integrate.quad(
+#                     lambda teta: special.sph_harm(n=i, m=0, theta=0, phi=teta) * special.sph_harm(n=j, m=0, theta=0,
+#                                                                                                   phi=teta) * np.sin(
+#                         teta), 0, 2 * np.pi)[0]
+#             else:
+#                 result[i, j] = result[j, i]
+#     return result
 
 def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
                      np.ndarray numerov_y, np.ndarray l, np.ndarray s_sph_harm):
