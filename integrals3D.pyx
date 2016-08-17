@@ -82,15 +82,15 @@ def norm_list(int nst, np.ndarray r_max):
         norm_li[i] = normalize(i, r_max[i])
     return norm_li
 
-cdef double vp(double ro, double z, double d, double b):
-    cdef double res
-    res = ((z + d) * (z + d) + ro * ro + b * b) * ((z + d) * (z + d) + ro * ro + b * b)
-    return 1.0000 / res
-
-cdef double vm(double ro, double z, double d, double b):
-    cdef double res
-    res = ((z - d) * (z - d) + ro * ro + b * b) * ((z - d) * (z - d) + ro * ro + b * b)
-    return 1.0000 / res
+# cdef double vp(double ro, double z, double d, double b):
+#     cdef double res
+#     res = ((z + d) * (z + d) + ro * ro + b * b) * ((z + d) * (z + d) + ro * ro + b * b)
+#     return 1.0000 / res
+#
+# cdef double vm(double ro, double z, double d, double b):
+#     cdef double res
+#     res = ((z - d) * (z - d) + ro * ro + b * b) * ((z - d) * (z - d) + ro * ro + b * b)
+#     return 1.0000 / res
 
 # def ssph_harm():
 #     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((params.l_max + 1, params.l_max + 1))
