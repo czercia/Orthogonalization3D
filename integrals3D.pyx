@@ -7,18 +7,18 @@ import params
 cdef extern from "math.h":
     double sqrt(double x) nogil
 
-def numerov_results(np.ndarray l, np.ndarray energy):
-    cdef np.ndarray[object, ndim=1] result_x = np.empty((len(l)), dtype=np.object)
-    cdef np.ndarray[object, ndim=1] result_y = np.empty((len(l)), dtype=np.object)
-    # result_x = []
-    # result_y = []
-    cdef np.ndarray[np.float64_t, ndim = 2] numerov_res = np.zeros((1, 1))
-    for ind in range(len(l)):
-        numerov_res = np.loadtxt(params.directory_numerov + 'psi_l=' + str(l[ind]) + '_' + str(energy[ind]) + '.dat')
-        numerov_res = numerov_res.T
-        result_x[ind] = numerov_res[0]
-        result_y[ind] = numerov_res[1]
-    return result_x, result_y
+# def numerov_results(np.ndarray l, np.ndarray energy):
+#     cdef np.ndarray[object, ndim=1] result_x = np.empty((len(l)), dtype=np.object)
+#     cdef np.ndarray[object, ndim=1] result_y = np.empty((len(l)), dtype=np.object)
+#     cdef np.ndarray[np.float64_t, ndim=1] result_xmax = np.empty((len(l)), dtype=np.float)
+#     cdef np.ndarray[np.float64_t, ndim = 2] numerov_res = np.zeros((1, 1))
+#     for ind in range(len(l)):
+#         numerov_res = np.loadtxt(params.directory_numerov + 'psi_l=' + str(l[ind]) + '_' + str(energy[ind]) + '.dat')
+#         numerov_res = numerov_res.T
+#         result_x[ind] = numerov_res[0]
+#         result_y[ind] = numerov_res[1]
+#         result_xmax = result_x[ind][-1]
+#     return result_x, result_y, result_xmax
 
 def f(double ro, double z, double d, np.ndarray x_list, np.ndarray y_list):
     cdef double r = sqrt(ro * ro + (z+d) * (z+d))
@@ -26,6 +26,9 @@ def f(double ro, double z, double d, np.ndarray x_list, np.ndarray y_list):
 
 def f_sph(double r, np.ndarray x_list, np.ndarray y_list):
     return np.interp(r, x_list, y_list)
+
+def psi(double r):
+    return 1
 
 def rmax_value(np.ndarray energy):
     cdef double r_max_value
