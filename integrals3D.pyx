@@ -20,8 +20,9 @@ def numerov_results(np.ndarray l, np.ndarray energy):
         result_y[ind] = numerov_res[1]
     return result_x, result_y
 
-def f(x, np.ndarray x_list, np.ndarray y_list):
-    return np.interp(x, x_list, y_list)
+def f(double ro, double z, double d, np.ndarray x_list, np.ndarray y_list):
+    cdef double r = sqrt(ro * ro + (z+d) * (z+d))
+    return np.interp(r, x_list, y_list)
 
 def rmax_value(np.ndarray energy):
     cdef double r_max_value
