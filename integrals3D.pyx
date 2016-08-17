@@ -201,24 +201,20 @@ def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
 #                 result[i, j] = result[j, i]
 #     return result
 
-def appmm_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
-          np.ndarray numerov_y, np.ndarray l):
+def A_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max):
     cdef Py_ssize_t i, j
     cdef double x_max, res1, lim_low_x, lim_up_x
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst), dtype=np.float64)
     for i in range(nst):
         for j in range(nst):
             x_max = rmax(i, j, r_max)
-            lim_low_x = -x_max
-            lim_up_x = x_max
+            lim_low_z = -x_max
+            lim_up_z = x_max
             result[i, j] = integrate.dblquad(
-                lambda ro, x: norm[i, j] * f(r(ro, x), numerov_x[i], numerov_y[i]) * f(
-                    r(ro, x), numerov_x[j], numerov_y[j]) * legendre(l[i], l[j], ro, x,
-                                                                     x) * ro * x,
-                lim_low_x, lim_up_x, lambda x: 0, lambda x: sqrt(x_max * x_max - x * x),
+                lambda ro, z: norm[i, j] * f(ro, z, 0) * f(ro, z, 0) * ro * z,
+                lim_low_z, lim_up_z, lambda z: 0, lambda z: sqrt(x_max * x_max - z * z),
                 epsabs=1e-6,
                 limit=100)[0]
-            result[i, j] = leg_pol_norm(l[i], l[j]) * result[i, j]
     return result
 
 def apm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
