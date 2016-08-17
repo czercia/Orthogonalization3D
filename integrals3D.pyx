@@ -55,7 +55,7 @@ def rmax(int i, int j, np.ndarray r_max):
 def normalize(int i, double x_max, np.ndarray numerov_x,
               np.ndarray numerov_y):
     cdef double n
-    n = integrate.quad(lambda r: abs(r * r * f(r, numerov_x[i], numerov_y[i])) * abs(f(r, numerov_x[i], numerov_y[i])),
+    n = integrate.quad(lambda r: abs(r * r * f_sph(r, numerov_x[i], numerov_y[i])) * abs(f_sph(r, numerov_x[i], numerov_y[i])),
                        -x_max,
                        x_max, epsabs=1e-6)[0]
     return 1. / np.sqrt(n)
