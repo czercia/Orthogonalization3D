@@ -58,7 +58,7 @@ def rmax(int i, int j, np.ndarray r_max):
 def normalize(int i, double x_max):
     cdef double n
     n = 4 * np.pi * integrate.quad(lambda r: r * r * abs( psi(r)) * abs(psi(r)),
-                       -x_max,
+                       0,
                        x_max, epsabs=1e-6)[0]
     return 1. / np.sqrt(n)
 
@@ -106,8 +106,7 @@ def norm_list(int nst, np.ndarray r_max):
 #                 result[i, j] = result[j, i]
 #     return result
 
-def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
-                     np.ndarray numerov_y, np.ndarray l, np.ndarray s_sph_harm):
+def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max):
     cdef Py_ssize_t i, j
     cdef double x_max
     cdef np.ndarray[np.float64_t, ndim = 2] result = np.zeros((nst, nst))
@@ -115,15 +114,11 @@ def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max, np.ndarray nume
         for j in range(nst):
             if i <= j:
                 x_max = rmax(i, j, r_max)
-                if l[i] != l[j]:
-                    result[i, j] = 0
-                else:
-                    result[i, j] = \
+                result[i, j] = \
                         integrate.quad(
-                            lambda x: norm[i, j] * x * x * f(x, numerov_x[i], numerov_y[i]) * f(x, numerov_x[j],
-                                                                                                numerov_y[j]),
-                            -x_max, x_max, epsabs=1e-6, limit=100)[
-                            0] * s_sph_harm[l[i], l[j]]
+                            lambda r: norm[i, j] *r * r* psi(r) * psi(r),
+                            0, x_max, epsabs=1e-6, limit=100)[
+                            0]
             else:
                 result[i, j] = result[j, i]
     return result
