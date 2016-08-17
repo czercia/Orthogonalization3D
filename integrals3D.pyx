@@ -20,9 +20,12 @@ cdef extern from "math.h":
 #         result_xmax = result_x[ind][-1]
 #     return result_x, result_y, result_xmax
 
-def f(double ro, double z, double d, np.ndarray x_list, np.ndarray y_list):
-    cdef double r = sqrt(ro * ro + (z+d) * (z+d))
-    return np.interp(r, x_list, y_list)
+# def f(double ro, double z, double d, np.ndarray x_list, np.ndarray y_list):
+#     cdef double r = sqrt(ro * ro + (z+d) * (z+d))
+#     return np.interp(r, x_list, y_list)
+
+def f(double ro, double z, double d):
+    return 1
 
 def f_sph(double r, np.ndarray x_list, np.ndarray y_list):
     return np.interp(r, x_list, y_list)
@@ -128,13 +131,13 @@ cdef double r(double ro, double z):
     result = sqrt(ro * ro + z * z)
     return result
 
-cdef double leg_pol_norm(int l_i, int l_j):
-    cdef double result
-    result = sqrt((2 * l_i + 1) * (2 * l_j + 1)) / (2 * np.pi)
-    return result
-
-cdef double legendre(int l_i, int l_j, double ro, double z_i, double z_j):
-    return special.eval_legendre(l_i, z_i / r(ro, z_i)) * special.eval_legendre(l_j, z_j / r(ro, z_j))
+# cdef double leg_pol_norm(int l_i, int l_j):
+#     cdef double result
+#     result = sqrt((2 * l_i + 1) * (2 * l_j + 1)) / (2 * np.pi)
+#     return result
+#
+# cdef double legendre(int l_i, int l_j, double ro, double z_i, double z_j):
+#     return special.eval_legendre(l_i, z_i / r(ro, z_i)) * special.eval_legendre(l_j, z_j / r(ro, z_j))
 
 def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
                      np.ndarray numerov_y, np.ndarray l):
@@ -146,9 +149,7 @@ def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
             lim_low_z = -r_max[j] + d
             lim_up_z = (r_max[i] * r_max[i] - r_max[j] * r_max[j]) / (4 * d)
             res1 = integrate.dblquad(
-                lambda ro, z: norm[i, j] * f(r(ro, z + d), numerov_x[i], numerov_y[i]) * f(
-                    r(ro, z - d), numerov_x[j], numerov_y[j]) * legendre(l[i], l[j], ro, z + d,
-                                                                         z - d) * ro,
+                lambda ro, z: norm[i, j] * f(ro, z, d) * f(ro, z, - d) * ro,
                 lim_low_z, lim_up_z, lambda z: 0, lambda z: sqrt(r_max[j] * r_max[j] - (z - d) * (z - d)),
                 epsabs=1e-6,
                 limit=100)[0]
@@ -156,13 +157,11 @@ def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
             lim_low_z = (r_max[i] * r_max[i] - r_max[j] * r_max[j]) / (4 * d)
             lim_up_z = r_max[i] - d
             res2 = integrate.dblquad(
-                lambda ro, z: norm[i, j] * f(r(ro, z + d), numerov_x[i], numerov_y[i]) * f(
-                    r(ro, z - d), numerov_x[j], numerov_y[j]) * legendre(l[i], l[j], ro, z + d,
-                                                                         z - d) * ro,
+                lambda ro, z: norm[i, j] * f(ro, z, d) * f(ro, z, - d)  * ro,
                 lim_low_z, lim_up_z, lambda z: 0, lambda z: sqrt(r_max[i] * r_max[i] - (z + d) * (z + d)),
                 epsabs=1e-6,
                 limit=100)[0]
-            result[i, j] = leg_pol_norm(l[i], l[j]) * (res1 + res2)
+            result[i, j] = res1 + res2
     return result
 
 def amm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.ndarray numerov_x,
