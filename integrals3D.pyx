@@ -78,7 +78,7 @@ def spp_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max):
         for j in range(nst):
             if i <= j:
                 x_max = rmax(i, j, r_max)
-                result[i, j] = \
+                result[i, j] = 2 * np.pi * \
                         integrate.quad(
                             lambda r: norm[i, j] *r * r* psi(r) * psi(r),
                             0, x_max, epsabs=1e-6, limit=100)[
@@ -115,7 +115,7 @@ def spm_3d_integrate(int nst, double d, np.ndarray norm, np.ndarray r_max, np.nd
                 lim_low_z, lim_up_z, lambda z: 0, lambda z: sqrt(r_max[i] * r_max[i] - (z + d) * (z + d)),
                 epsabs=1e-6,
                 limit=100)[0]
-            result[i, j] = res1 + res2
+            result[i, j] = 2 * np.pi * (res1 + res2)
     return result
 
 
@@ -128,7 +128,7 @@ def A_3d_integrate(int nst, np.ndarray norm, np.ndarray r_max):
             x_max = rmax(i, j, r_max)
             lim_low_z = -x_max
             lim_up_z = x_max
-            result[i, j] = integrate.dblquad(
+            result[i, j] = 2 * np.pi * integrate.dblquad(
                 lambda ro, z: norm[i, j] * f(ro, z, 0) * f(ro, z, 0) * ro * z,
                 lim_low_z, lim_up_z, lambda z: 0, lambda z: sqrt(x_max * x_max - z * z),
                 epsabs=1e-6,
